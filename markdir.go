@@ -30,9 +30,17 @@ var outputTemplate = template.Must(template.New("base").Parse(`
   <head>
 	<meta charset="utf-8">
     <title>{{ .Path }}</title>
-	<link rel="stylesheet" href="index.css">
+	<link rel="stylesheet" href="/index.css">
+	<style>
+    .markdown-body {
+        min-width: 200px;
+        max-width: 790px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+  </style>
   </head>
-  <body>
+  <body class="markdown-body">
     {{ .Body }}
   </body>
 </html>
