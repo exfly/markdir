@@ -33,7 +33,7 @@ useful example. It's fewer bytes than this README.md is.
 Installation
 ============
 
-    go get -v -u github.com/thejerf/markdir
+    go install github.com/exfly/markdir@latest
     ./markdir -h  # see the default flag help file
     ./markdir     # serves the directory
 

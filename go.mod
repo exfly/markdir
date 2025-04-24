@@ -1,4 +1,4 @@
-module markdir
+module github.com/exfly/markdir
 
 go 1.15
 
