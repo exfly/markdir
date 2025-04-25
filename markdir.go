@@ -8,9 +8,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/russross/blackfriday"
+	"bytes"
+
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
+	"go.abhg.dev/goldmark/wikilink"
 )
 
 var bind = flag.String("bind", "127.0.0.1:19000", "port to run the server on")
@@ -73,7 +80,26 @@ func (r renderer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	output := blackfriday.MarkdownCommon(input)
+	md := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			&wikilink.Extender{
+				Resolver: defaultResolver{},
+			},
+		),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithUnsafe(),
+			html.WithHardWraps(),
+			html.WithXHTML(),
+		),
+	)
+	var buf bytes.Buffer
+	if err := md.Convert(input, &buf); err != nil {
+		panic(err)
+	}
 
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -82,7 +108,32 @@ func (r renderer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		Body template.HTML
 	}{
 		Path: req.URL.Path,
-		Body: template.HTML(string(output)),
+		Body: template.HTML(buf.String()),
 	})
 
+}
+
+var (
+	_html = []byte(".md")
+	_hash = []byte{'#'}
+)
+
+type defaultResolver struct{}
+
+func (defaultResolver) ResolveWikilink(n *wikilink.Node) ([]byte, error) {
+	dest := make([]byte, len(n.Target)+len(_html)+len(_hash)+len(n.Fragment))
+
+	var i int
+	if len(n.Target) > 0 {
+		i += copy(dest, n.Target)
+		if filepath.Ext(string(n.Target)) == "" {
+			i += copy(dest[i:], _html)
+		}
+	}
+	if len(n.Fragment) > 0 {
+		i += copy(dest[i:], _hash)
+		i += copy(dest[i:], n.Fragment)
+	}
+
+	return dest[:i], nil
 }

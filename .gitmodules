@@ -1,0 +1,3 @@
+[submodule "third_part/goldmark-wikilink"]
+	path = third_part/goldmark-wikilink
+	url = git@github.com:exfly/goldmark-wikilink.git
